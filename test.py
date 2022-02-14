@@ -9,6 +9,32 @@
 from z3 import *
 import sys
 
+def print_steps(m):
+	for time in range(timeout):
+		answer = []
+		for i in range(n):
+			for j in range(n):
+				val = is_true(m[P[i][j][0][time]]) ^ is_true(m[P[i][j][0][time+1]])
+				if val:
+					answer=(i, j, "vertical")
+		for i in range(n):
+			for j in range(n):
+				val = is_true(m[P[i][j][1][time]]) ^ is_true(m[P[i][j][1][time+1]])
+				if val:
+					answer=(i, j, "horizontal")
+		for i in range(n):
+			for j in range(n):
+				val = is_true(m[P[i][j][2][time]]) ^ is_true(m[P[i][j][2][time+1]])
+				if val:
+					answer=(i, j, "mine")
+		for i in range(n):
+			for j in range(n):
+				val = is_true(m[P[i][j][3][time]]) ^ is_true(m[P[i][j][3][time+1]])
+				if val:
+					answer=(i, j, "red")
+		print(f"{answer[0]},{answer[1]}")
+
+
 info = []
 with open(sys.argv[1]) as f:
     for line in f:
@@ -64,7 +90,6 @@ for time in range(timeout + 1):
 			)
 
 # print(Fs)
-Ss = []
 # Red Car at (i, j) implies nothing else at (i, j+1)
 for time in range(timeout + 1):
 	for i in range(n):
@@ -73,9 +98,7 @@ for time in range(timeout + 1):
 			Or(Not(P[i][j][3][time]), Not(Or(P[i][j+1][0][time],P[i][j+1][1][time],P[i][j+1][2][time],P[i][j+1][3][time])))
 			)
 
-print(Ss)
 # Vertical car at (i, j) implies nothing else at (i+1, j)
-Vs = []
 for time in range(timeout + 1):
 	for i in range(n - 1):
 		for j in range(n):
@@ -83,7 +106,6 @@ for time in range(timeout + 1):
 			Or(Not(P[i][j][0][time]), Not(Or(P[i+1][j][0][time],P[i+1][j][1][time],P[i+1][j][2][time],P[i+1][j][3][time])))
 			)
 
-print(Vs)
 # No horizontal cars in last column
 for time in range(timeout + 1):
 	for i in range(n):
@@ -91,30 +113,25 @@ for time in range(timeout + 1):
 
 # No red cars in last column
 for time in range(timeout + 1):
-	Fs.append(Not(P[i0][n-1][3][time]))
+	for i in range(n):
+		Fs.append(Not(P[i][n-1][3][time]))
 
-Bs = []
 # No vertical cars in last row
 for time in range(timeout + 1):
 	for j in range(n):
 		Fs.append(Not(P[n-1][j][0][time]))
 
-print(Bs)
 # Vertical car at (i, j) implies no horizontal car and no red car at (i+1, j-1)
-Cs = []
 for time in range(timeout + 1):
 	for i in range(n - 1):
 		for j in range(1, n):
 			Fs += [  Or(Not(P[i][j][0][time]),And(Not(P[i+1][j-1][1][time]),Not(P[i+1][j-1][3][time])))]
-print(Cs)
 # The mine stays in one place
-Ds = []
 for time in range(timeout):
 	for i in range(n):
 		for j in range(n):
 			Fs.append(Or(Not(P[i][j][2][time]), P[i][j][2][time + 1]))
 			Fs.append(Or(Not(P[i][j][2][time+1]), P[i][j][2][time]))
-print(Ds)
 """
 Encoding the Moves Now
 """
@@ -157,6 +174,70 @@ for time in range(timeout):
 	
 	Fs.append(PbEq([(x,1) for x in moves],1))
 
+# For Horizontal
+for time in range(1, timeout + 1):
+	for i in range(n):
+		for j in range(1, n-2):
+			Fs.append(Or(Not(P[i][j][1][time]), P[i][j-1][1][time-1], P[i][j][1][time-1], P[i][j+1][1][time-1]))
+		Fs.append(Or(Not(P[i][0][1][time]), P[i][1][1][time-1], P[i][0][1][time-1]))
+		if (n >= 3):
+			Fs.append(Or(Not(P[i][n-2][1][time]), P[i][n-3][1][time-1], P[i][n-2][1][time-1]))
+
+# For Red Car
+for time in range(1, timeout + 1):
+	for i in range(n):
+		for j in range(1, n-2):
+			Fs.append(Or(Not(P[i][j][3][time]), P[i][j-1][3][time-1], P[i][j][3][time-1], P[i][j+1][3][time-1]))
+		Fs.append(Or(Not(P[i][0][3][time]), P[i][1][3][time-1], P[i][0][3][time-1]))
+		if (n >= 3):
+			Fs.append(Or(Not(P[i][n-2][3][time]), P[i][n-3][3][time-1], P[i][n-2][3][time-1]))
+
+
+for time in range(1, timeout + 1):
+	for j in range(n):
+		for i in range(1, n-2):
+			Fs.append(Or(Not(P[i][j][0][time]), P[i-1][j][0][time-1], P[i][j][0][time-1], P[i+1][j][0][time-1]))
+		Fs.append(Or(Not(P[0][j][0][time]), P[1][j][0][time-1], P[0][j][0][time-1]))
+		if (n >= 3):
+			Fs.append(Or(Not(P[n-2][j][0][time]), P[n-3][j][0][time-1], P[n-2][j][0][time-1]))
+
+# # Total number of cars is constant
+# for time in range(timeout+1):
+# 	temp = []
+# 	for i in range(n):
+# 		for j in range(n):
+# 			for car_type in range(4):
+# 				temp.append(P[i][j][car_type][time])
+# 	Fs.append(PbEq([(x,1) for x in temp], cars))
+
+
+# Vertical Car
+for time in range(timeout):
+	for j in range(n):
+		for i in range(1, n-2):
+			Fs.append(Or(Not(P[i][j][0][time]), P[i+1][j][0][time+1], P[i][j][0][time+1], P[i-1][j][0][time+1]))
+		Fs.append(Or(Not(P[0][j][0][time]), P[0][j][0][time+1], P[1][j][0][time+1]))
+		if (n >= 3):
+			Fs.append(Or(Not(P[n-2][j][0][time]), P[n-3][j][0][time+1], P[n-2][j][0][time+1]))
+
+for time in range(timeout):
+	for i in range(n):
+		for j in range(1, n-2):
+			Fs.append(Or(Not(P[i][j][1][time]), P[i][j+1][1][time+1], P[i][j][1][time+1], P[i][j-1][1][time+1]))
+		Fs.append(Or(Not(P[i][0][1][time]), P[i][0][1][time+1], P[i][1][1][time+1]))
+		if (n >= 3):
+			Fs.append(Or(Not(P[i][n-2][1][time]), P[i][n-3][1][time+1], P[i][n-2][1][time+1]))
+
+for time in range(timeout):
+	for i in range(n):
+		for j in range(1, n-2):
+			Fs.append(Or(Not(P[i][j][3][time]), P[i][j+1][3][time+1], P[i][j][3][time+1], P[i][j-1][3][time+1]))
+		Fs.append(Or(Not(P[i][0][3][time]), P[i][0][3][time+1], P[i][1][3][time+1]))
+		if (n >= 3):
+			Fs.append(Or(Not(P[i][n-2][3][time]), P[i][n-3][3][time+1], P[i][n-2][3][time+1]))
+
+
+
 # Goal Clause
 temp = []
 for time in range(timeout+1):
@@ -170,18 +251,14 @@ s.add(Fs)
 result = s.check()
 
 if result == sat:
-    # get satisfying model
-    m = s.model()
-
-    # print only if value is true
-    # print (sorted ([(d, m[d]) for d in m], key = lambda x: str(x[0]))
-
-    #for i in range(timeout+1):
-    #    for j in range(n*n*4):
-    #        print(str(P[i][j])+str(m.eval(P[i][j])))
-
-
-    print("SAT")
+	m = s.model()
+	#print("SAT")
+	print_steps(m)
+	# for k in range(timeout+1):
+	# 	for i in range(n):
+	# 		for j in range(n):
+	# 			for l in range(4):
+	# 				print(str(P[i][j][l][k])+str(m.eval(P[i][j][l][k])))
 
 else:
     print("UNSAT")
