@@ -161,11 +161,11 @@ for k in range(timeout):
 #		temp.append(P[k][i])
 #	Fs.append(PbEq([(x,1) for x in temp], cars))
 
-#for k in range(timeout):
-#	temp = []
-#	for i in range(4 * n * n):
-#		temp.append(Xor(P[k][i], P[k + 1][i]))
-#	Fs.append(PbEq([(x,1) for x in temp], 2))
+for k in range(timeout):
+	temp = []
+	for i in range(4 * n * n):
+		temp.append(Xor(P[k][i], P[k + 1][i]))
+	Fs.append(PbEq([(x,1) for x in temp], 2))
 
 
 
