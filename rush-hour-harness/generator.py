@@ -30,7 +30,7 @@ Example:
 	|____|____|____|____|____|____|
 4	|    |    |    |    |    |    |
 	|____|____|____|____|____|____|
-5       |    |    |    |    |    |    |
+5   |    |    |    |    |    |    |
 	|____|____|____|____|____|____|
 
 In the above diagram, the red car is denoted with the letter R is located in

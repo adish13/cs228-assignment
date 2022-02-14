@@ -32,7 +32,10 @@ def print_steps(m):
 				val = is_true(m[P[i][j][3][time]]) ^ is_true(m[P[i][j][3][time+1]])
 				if val:
 					answer=(i, j, "red")
-		print(f"{answer[0]},{answer[1]}")
+		if len(answer) == 0:
+			continue
+		else:
+			print(f"{answer[0]},{answer[1]}")
 
 
 info = []
@@ -172,7 +175,7 @@ for time in range(timeout):
 		for j in range(n-2):
 			moves.append(And(Not(P[i][j][3][time+1]), P[i][j][3][time], P[i][j+1][3][time+1]))
 	
-	Fs.append(PbEq([(x,1) for x in moves],1))
+	Fs.append(PbLe([(x,1) for x in moves],1))
 
 # For Horizontal
 for time in range(1, timeout + 1):
@@ -239,11 +242,12 @@ for time in range(timeout):
 
 
 # Goal Clause
-temp = []
-for time in range(timeout+1):
-	temp.append(P[i0][n-2][3][time])
+# temp = []
+# for time in range(timeout+1):
+# 	temp.append(P[i0][n-2][3][time])
 
-Fs.append(PbGe([(x,1) for x in temp],1))
+# Fs.append(PbGe([(x,1) for x in temp],1))
+Fs += [P[i0][n-2][3][timeout]]
 
 s = Solver()
 s.add(Fs)
