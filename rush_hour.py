@@ -32,7 +32,10 @@ def print_steps(m):
 				val = is_true(m[P[i][j][3][time]]) ^ is_true(m[P[i][j][3][time+1]])
 				if val:
 					answer=(i, j, "red")
-		print(f"{answer[0]},{answer[1]}")
+		if len(answer) == 0:
+			continue
+		else:
+			print(f"{answer[0]},{answer[1]}")
 
 
 info = []
@@ -172,8 +175,9 @@ for time in range(timeout):
 		for j in range(n-2):
 			moves.append(And(Not(P[i][j][3][time+1]), P[i][j][3][time], P[i][j+1][3][time+1]))
 	
-	Fs.append(PbEq([(x,1) for x in moves],1))
+	Fs.append(PbLe([(x,1) for x in moves],1))
 
+# Avoiding teleportation
 # For Horizontal
 for time in range(1, timeout + 1):
 	for i in range(n):
@@ -201,16 +205,8 @@ for time in range(1, timeout + 1):
 		if (n >= 3):
 			Fs.append(Or(Not(P[n-2][j][0][time]), P[n-3][j][0][time-1], P[n-2][j][0][time-1]))
 
-# # Total number of cars is constant
-# for time in range(timeout+1):
-# 	temp = []
-# 	for i in range(n):
-# 		for j in range(n):
-# 			for car_type in range(4):
-# 				temp.append(P[i][j][car_type][time])
-# 	Fs.append(PbEq([(x,1) for x in temp], cars))
 
-
+# Avoiding vanishing cars
 # Vertical Car
 for time in range(timeout):
 	for j in range(n):
@@ -239,11 +235,7 @@ for time in range(timeout):
 
 
 # Goal Clause
-temp = []
-for time in range(timeout+1):
-	temp.append(P[i0][n-2][3][time])
-
-Fs.append(PbGe([(x,1) for x in temp],1))
+Fs += [P[i0][n-2][3][timeout]]
 
 s = Solver()
 s.add(Fs)
@@ -255,4 +247,4 @@ if result == sat:
 	print_steps(m)
 
 else:
-    print("UNSAT")
+    print("unsat")
